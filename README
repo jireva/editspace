@@ -1,0 +1,33 @@
+
+editspace
+
+Library that implements a Levenstein trie to calculate distance between sequences.
+Provides two binaries.
+
+correct takes two arguments,
+a maximum edit distance and
+a list of known sequences.
+It then corrects sequences on the first field of stdin
+to the closest sequence in the list of known sequences
+(anything in subsequent fields is simply echoed).
+If a match can't be found, or two sequences in the list are equally close,
+correct prints the corresponding line to stderr
+with an additional field explaining the reason for exclusion.
+The list of known sequences can have two columns,
+in which case, the word on the first column
+is replaced by the word on the second column.
+
+cluster takes three arguments,
+a maximum edit distance,
+a minimum count required to consider a sequence a viable cluster, and
+an expected maximum fraction for a sequence to be considered an error.
+It counts sequences on stdin,
+then runs through them again,
+in order of highest to lowest count,
+and prints only the sequences that are at least
+the maximum edit distance different from any sequences with more than
+the maximum fraction expected for error sequences.
+Any rejected sequences are printed,
+with their counts,
+and a reason for exclusion,
+on stderr.
