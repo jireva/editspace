@@ -2,50 +2,43 @@
 use super::*;
 
 #[test]
-fn iter_matches() {
+fn distance() {
 	let mut trie = Trie::new();
 
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTC");
-	trie.add(b"ACTATG");
-	trie.add(b"AGGGTTTG");
-	trie.add(b"AGGGTTTTTTG");
-	trie.add(b"AGGGTTTTTTG");
-	trie.add(b"TT");
+	*trie.add(b"TAATACGACTCACTATAGGG") = Some("item");
 
-	assert_eq!(trie.iter_matches(b"AGCGTTTATTG", 2).next().unwrap().word(), b"AGGGTTTTTTG");
-	assert_eq!(trie.iter_matches(b"AGCGTTTATTG", 2).next().unwrap().count, 2);
-	assert_eq!(trie.iter_matches(b"ACTTTG", 0).next().unwrap().word(), b"ACTTTG");
-	assert_eq!(trie.iter_matches(b"ACTTTG", 0).next().unwrap().count, 8);
-
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGG", 0).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGA", 0).count(), 0);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGG", 1).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGA", 1).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGAA", 1).count(), 0);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGG", 2).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGA", 2).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGAA", 2).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAAAA", 2).count(), 0);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGG", 3).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGGA", 3).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAGAA", 3).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTATAAAA", 3).count(), 1);
+	assert_eq!(trie.iter_matches(b"TAATACGACTCACTAAAAAA", 3).count(), 0);
 }
 
 #[test]
-fn iter_words() {
+fn empty_word() {
 	let mut trie = Trie::new();
 
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTG");
-	trie.add(b"ACTTTC");
-	trie.add(b"ACTATG");
-	trie.add(b"AGGGTTTG");
-	trie.add(b"AGGGTTTTTTG");
-	trie.add(b"AGGGTTTTTTG");
-	trie.add(b"TT");
+	*trie.add(b"TAATACGACTCACTATAGGG") = Some("not empty");
+	*trie.add(b"") = Some("empty");
 
-	assert_eq!(trie.iter_words().map(|w| w.count).collect::<Vec<u32>>(), vec![1, 2, 1, 8, 1, 1]);
-
+	assert_eq!(trie.item(trie.iter_matches(b"", 0).next().unwrap().index), &Some("empty"));
+	assert_eq!(trie.iter_matches(b"", 0).count(), 1);
+	assert_eq!(trie.iter_matches(b"A", 0).count(), 0);
+	assert_eq!(trie.iter_matches(b"A", 1).count(), 1);
+	assert_eq!(trie.iter_matches(b"AA", 0).count(), 0);
+	assert_eq!(trie.iter_matches(b"AA", 1).count(), 0);
+	assert_eq!(trie.iter_matches(b"AA", 2).count(), 1);
+	assert_eq!(trie.iter_matches(b"AAA", 0).count(), 0);
+	assert_eq!(trie.iter_matches(b"AAA", 1).count(), 0);
+	assert_eq!(trie.iter_matches(b"AAA", 2).count(), 0);
+	assert_eq!(trie.iter_matches(b"AAA", 3).count(), 1);
 }

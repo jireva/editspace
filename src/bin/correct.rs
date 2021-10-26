@@ -19,12 +19,16 @@ fn main() -> io::Result<()> {
 		if bytes_read == 0 {
 			break
 		}
-		let mut fields = buf.splitn(2, |b| *b == b'\t');
-		let word = fields.next().unwrap_or(b"\n");
-		if word == b"\n" {
-			buf.clear();
-			continue;
+		let word;
+		let rest;
+		if let Some(tab) = buf.iter().position(|&x| x == b'\t') {
+			word = &buf[0..tab];
+			rest = &buf[tab+1..];
+		} else {
+			word = &buf[..buf.len()-1];
+			rest = &buf[buf.len()-1..];
 		}
+
 		let matches: Vec<editspace::Match> = trie.iter_matches(word, distance).collect();
 		if matches.len() == 0 {
 			stderr.write_all(b"no_matches	")?;
@@ -32,7 +36,7 @@ fn main() -> io::Result<()> {
 		} else if matches.len() == 1 {
 			stdout.write_all(trie.item(matches[0].index).as_ref().unwrap())?;
 			stdout.write_all(b"\t")?;
-			stdout.write_all(fields.next().unwrap_or(b"\n"))?;
+			stdout.write_all(rest)?;
 		} else {
 			let mut best_distance = distance;
 			let mut best_match = None;
@@ -47,7 +51,7 @@ fn main() -> io::Result<()> {
 			if let Some(i) = best_match {
 				stdout.write_all(trie.item(i).as_ref().unwrap())?;
 				stdout.write_all(b"\t")?;
-				stdout.write_all(fields.next().unwrap_or(b"\n"))?;
+				stdout.write_all(rest)?;
 			} else {
 				stderr.write_all(b"multiple_matches	")?;
 				stderr.write_all(&buf)?;
@@ -93,15 +97,17 @@ fn trie_from_known(file: fs::File) -> editspace::Trie<Vec<u8>> {
 		if bytes_read == 0 {
 			break
 		}
-		let mut fields = buf[..buf.len()-1].splitn(2, |b| *b == b'\t');
-		let word = fields.next().unwrap_or(b"\n");
-		if word == b"\n" {
-			buf.clear();
+		if buf.len() == 1 {
 			continue;
 		}
-		let replacement = fields.next().unwrap_or(word);
-		
-		*trie.add(word) = Some(replacement.to_vec());
+		if let Some(tab) = buf.iter().position(|&x| x == b'\t') {
+			let word = &buf[0..tab];
+			let replacement = &buf[tab+1..buf.len()-1];
+			*trie.add(word) = Some(replacement.to_vec());
+		} else {
+			let word = &buf[..buf.len()-1];
+			*trie.add(word) = Some(word.to_vec());
+		}
 		buf.clear();
 	}
 	trie

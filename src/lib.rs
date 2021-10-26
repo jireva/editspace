@@ -107,9 +107,10 @@ impl<T> Trie<T> {
 		let mut branches = Vec::with_capacity(16);
 		for b in BASES.iter() {
 			if let Some(node) = self.0[0][*b] {
-				branches.push(ProtoMatch{index: node, row})
+				branches.push(ProtoMatch{index: node, row});
 			}
 		}
+		branches.push(ProtoMatch{index: Index(0), row});
 		Matches{
 			trie: self,
 			word,
@@ -164,6 +165,15 @@ impl<'a, T> Iterator for Matches<'a, T> {
 
 	fn next(&mut self) -> Option<Match> {
 		while let Some(proto_match) = self.branches.pop() {
+			if proto_match.index.0==0 {
+				if (self.word.len() <= self.distance as usize) && self.trie.0[proto_match.index.0].item.is_some() {
+					return Some(Match{
+						index: proto_match.index,
+						distance: self.word.len() as u8,
+					});
+				}
+				continue
+			}
 			let mut row = [0u8; MAXLEN];
 			row[0] = proto_match.row[0] + 1;
 			let mut insert_cost;

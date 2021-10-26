@@ -106,6 +106,9 @@ fn trie_from_stdin() -> editspace::Trie<u32> {
 		if bytes_read == 0 {
 			break
 		}
+		if buf.len() == 1 {
+			continue;
+		}
 		let item = trie.add(&buf[..buf.len()-1]);
 		match item {
 			None => *item = Some(1),
