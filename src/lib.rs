@@ -90,7 +90,7 @@ impl<T> Trie<T> {
 		&mut self.0[node].item
 	}
 
-	pub fn iter_words<'a>(&'a self) -> Indices<'a, T> {
+	pub fn iter_words(& self) -> Indices<T> {
 		Indices{
 			trie: self,
 			branches: vec![Index(0)],

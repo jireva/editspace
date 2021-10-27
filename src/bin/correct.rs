@@ -1,6 +1,4 @@
 
-use editspace;
-
 use std::process;
 use std::env;
 use std::fs;
@@ -30,7 +28,7 @@ fn main() -> io::Result<()> {
 		}
 
 		let matches: Vec<editspace::Match> = trie.iter_matches(word, distance).collect();
-		if matches.len() == 0 {
+		if matches.is_empty() {
 			stderr.write_all(b"no_matches	")?;
 			stderr.write_all(&buf)?;
 		} else if matches.len() == 1 {
@@ -44,8 +42,6 @@ fn main() -> io::Result<()> {
 				if m.distance < best_distance {
 					best_distance = m.distance;
 					best_match = Some(m.index);
-				} else if m.distance == best_distance {
-					best_match = None;
 				}
 			}
 			if let Some(i) = best_match {
