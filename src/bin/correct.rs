@@ -1,13 +1,12 @@
-
-use std::process;
 use std::env;
 use std::fs;
 use std::io::{self, prelude::*, BufReader};
+use std::process;
 
 fn main() -> io::Result<()> {
 	let (distance, known_file) = parse_args(env::args());
 	let trie = trie_from_known(known_file);
-	
+
 	let mut stdout = io::stdout();
 	let mut stderr = io::stderr();
 
@@ -15,19 +14,20 @@ fn main() -> io::Result<()> {
 	let mut reader = BufReader::new(io::stdin());
 	while let Ok(bytes_read) = reader.read_until(b'\n', &mut buf) {
 		if bytes_read == 0 {
-			break
+			break;
 		}
 		let word;
 		let rest;
 		if let Some(tab) = buf.iter().position(|&x| x == b'\t') {
-			word = &buf[0..tab];
-			rest = &buf[tab+1..];
+			word = &buf[0 .. tab];
+			rest = &buf[tab + 1 ..];
 		} else {
-			word = &buf[..buf.len()-1];
-			rest = &buf[buf.len()-1..];
+			word = &buf[.. buf.len() - 1];
+			rest = &buf[buf.len() - 1 ..];
 		}
 
-		let matches: Vec<editspace::Match> = trie.iter_matches(word, distance).collect();
+		let matches: Vec<editspace::Match> =
+			trie.iter_matches(word, distance).collect();
 		if matches.is_empty() {
 			stderr.write_all(b"no_matches	")?;
 			stderr.write_all(&buf)?;
@@ -69,7 +69,7 @@ fn parse_args(args: env::Args) -> (u8, fs::File) {
 		Err(_) => {
 			eprintln!("{} is not a number", args[1]);
 			process::exit(1);
-		},
+		}
 	};
 	if distance > 4 {
 		eprintln!("distance should not be greater than 4");
@@ -80,9 +80,9 @@ fn parse_args(args: env::Args) -> (u8, fs::File) {
 		Err(_) => {
 			eprintln!("could not open {}", args[2]);
 			process::exit(1);
-		},
+		}
 	};
-	(distance, file)	
+	(distance, file)
 }
 
 fn trie_from_known(file: fs::File) -> editspace::Trie<Vec<u8>> {
@@ -91,17 +91,17 @@ fn trie_from_known(file: fs::File) -> editspace::Trie<Vec<u8>> {
 	let mut reader = BufReader::new(file);
 	while let Ok(bytes_read) = reader.read_until(b'\n', &mut buf) {
 		if bytes_read == 0 {
-			break
+			break;
 		}
 		if buf.len() == 1 {
 			continue;
 		}
 		if let Some(tab) = buf.iter().position(|&x| x == b'\t') {
-			let word = &buf[0..tab];
-			let replacement = &buf[tab+1..buf.len()-1];
+			let word = &buf[0 .. tab];
+			let replacement = &buf[tab + 1 .. buf.len() - 1];
 			*trie.add(word) = Some(replacement.to_vec());
 		} else {
-			let word = &buf[..buf.len()-1];
+			let word = &buf[.. buf.len() - 1];
 			*trie.add(word) = Some(word.to_vec());
 		}
 		buf.clear();

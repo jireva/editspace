@@ -1,4 +1,3 @@
-
 use super::*;
 
 #[test]
@@ -30,7 +29,10 @@ fn empty_word() {
 	*trie.add(b"TAATACGACTCACTATAGGG") = Some("not empty");
 	*trie.add(b"") = Some("empty");
 
-	assert_eq!(trie.item(trie.iter_matches(b"", 0).next().unwrap().index), &Some("empty"));
+	assert_eq!(
+		trie.item(trie.iter_matches(b"", 0).next().unwrap().index),
+		&Some("empty")
+	);
 	assert_eq!(trie.iter_matches(b"", 0).count(), 1);
 	assert_eq!(trie.iter_matches(b"A", 0).count(), 0);
 	assert_eq!(trie.iter_matches(b"A", 1).count(), 1);

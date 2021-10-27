@@ -6,7 +6,7 @@ mod tests;
 
 const MAXLEN: usize = 100;
 
-pub struct Trie<T> (Vec<Node<T>>);
+pub struct Trie<T>(Vec<Node<T>>);
 
 #[derive(Eq, PartialEq, Copy, Clone)]
 pub struct Index(usize);
@@ -22,7 +22,15 @@ struct Node<T> {
 }
 impl<T> Node<T> {
 	fn new(base: u8, parent: Index) -> Node<T> {
-		Node{base, parent: Some(parent), a: None,  c: None,  g: None,  t: None, item: None}
+		Node {
+			base,
+			parent: Some(parent),
+			a: None,
+			c: None,
+			g: None,
+			t: None,
+			item: None,
+		}
 	}
 }
 
@@ -56,7 +64,15 @@ impl<T> ops::IndexMut<u8> for Node<T> {
 
 impl<T> Trie<T> {
 	pub fn new() -> Trie<T> {
-		Trie(vec![Node{base: 0, parent: None, a: None,  c: None,  g: None,  t: None, item: None}])
+		Trie(vec![Node {
+			base: 0,
+			parent: None,
+			a: None,
+			c: None,
+			g: None,
+			t: None,
+			item: None,
+		}])
 	}
 
 	pub fn item(&self, i: Index) -> &Option<T> {
@@ -76,7 +92,7 @@ impl<T> Trie<T> {
 
 	pub fn add(&mut self, word: &[u8]) -> &mut Option<T> {
 		let mut node = 0;
-	
+
 		for c in word.iter() {
 			match self.0[node][*c] {
 				Some(child) => node = child.0,
@@ -84,34 +100,41 @@ impl<T> Trie<T> {
 					self.0[node][*c] = Some(Index(self.0.len()));
 					self.0.push(Node::new(*c, Index(node)));
 					node = self.0.len() - 1;
-				},
+				}
 			}
 		}
 		&mut self.0[node].item
 	}
 
-	pub fn iter_words(& self) -> Indices<T> {
-		Indices{
+	pub fn iter_words(&self) -> Indices<T> {
+		Indices {
 			trie: self,
 			branches: vec![Index(0)],
 		}
 	}
 
-	pub fn iter_matches<'a>(&'a self, word: &'a [u8], distance: u8) -> Matches<'a, T> {
+	pub fn iter_matches<'a>(
+		&'a self,
+		word: &'a [u8],
+		distance: u8,
+	) -> Matches<'a, T> {
 		assert!(word.len() < MAXLEN);
 		assert!(distance < 5);
 		let mut row = [0u8; MAXLEN];
-		for i in 0..(word.len()+1) {
+		for i in 0 .. (word.len() + 1) {
 			row[i] = i as u8;
 		}
 		let mut branches = Vec::with_capacity(16);
 		for b in BASES.iter() {
 			if let Some(node) = self.0[0][*b] {
-				branches.push(ProtoMatch{index: node, row});
+				branches.push(ProtoMatch { index: node, row });
 			}
 		}
-		branches.push(ProtoMatch{index: Index(0), row});
-		Matches{
+		branches.push(ProtoMatch {
+			index: Index(0),
+			row,
+		});
+		Matches {
 			trie: self,
 			word,
 			distance,
@@ -165,43 +188,52 @@ impl<'a, T> Iterator for Matches<'a, T> {
 
 	fn next(&mut self) -> Option<Match> {
 		while let Some(proto_match) = self.branches.pop() {
-			if proto_match.index.0==0 {
-				if (self.word.len() <= self.distance as usize) && self.trie.0[proto_match.index.0].item.is_some() {
-					return Some(Match{
+			if proto_match.index.0 == 0 {
+				if (self.word.len() <= self.distance as usize)
+					&& self.trie.0[proto_match.index.0].item.is_some()
+				{
+					return Some(Match {
 						index: proto_match.index,
 						distance: self.word.len() as u8,
 					});
 				}
-				continue
+				continue;
 			}
 			let mut row = [0u8; MAXLEN];
 			row[0] = proto_match.row[0] + 1;
 			let mut insert_cost;
 			let mut delete_cost;
 			let mut replace_cost;
-			for column in 1..(self.word.len()+1) {
-				insert_cost = row[column-1] + 1;
+			for column in 1 .. (self.word.len() + 1) {
+				insert_cost = row[column - 1] + 1;
 				delete_cost = proto_match.row[column] + 1;
-				if self.word[column-1] != self.trie.0[proto_match.index.0].base {
-					replace_cost = proto_match.row[column-1] + 1;
+				if self.word[column - 1]
+					!= self.trie.0[proto_match.index.0].base
+				{
+					replace_cost = proto_match.row[column - 1] + 1;
 				} else {
-					replace_cost = proto_match.row[column-1];
+					replace_cost = proto_match.row[column - 1];
 				}
-				row[column] = cmp::min(cmp::min(insert_cost, delete_cost), replace_cost);
+				row[column] =
+					cmp::min(cmp::min(insert_cost, delete_cost), replace_cost);
 			}
 			// if any entries in the row are less than the maximum cost, then
 			// recursively search each branch of the trie
-			if row[..(self.word.len()+1)].iter().min().unwrap() <= &self.distance {
+			if row[.. (self.word.len() + 1)].iter().min().unwrap()
+				<= &self.distance
+			{
 				for b in BASES.iter() {
 					if let Some(node) = self.trie.0[proto_match.index.0][*b] {
-						self.branches.push(ProtoMatch{index: node, row})
+						self.branches.push(ProtoMatch { index: node, row })
 					}
 				}
 			}
 			// if the last entry in the row indicates the optimal cost is less than the
 			// maximum cost, and there is a word in this trie node, then return it.
-			if (row[self.word.len()] <= self.distance) && (self.trie.0[proto_match.index.0].item.is_some()) {
-				return Some(Match{
+			if (row[self.word.len()] <= self.distance)
+				&& (self.trie.0[proto_match.index.0].item.is_some())
+			{
+				return Some(Match {
 					index: proto_match.index,
 					distance: row[self.word.len()],
 				});
